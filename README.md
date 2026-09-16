@@ -147,23 +147,28 @@ rather than causal effects.
 
 
 ## Project Structure
-insurance_claims_analysis/
-├── data/                                 #raw dataset (not comitted to GitHub)
+```text
+Insurance-Claims-Analysis/
+├── data/
 │   └── Car Insurance Policies.xlsx
-├── R/                                    #analysis scripts
+├── R/
 │   ├── 01_data_cleaning.R
 │   ├── 02_eda.R
 │   ├── 03_frequency_model.R
 │   └── 04_severity_analysis.R
-├── figures/                              #selected analysis visualizations
-├── output/                               #processed data and model results 
+├── figures/
+│   ├── average_claim_frequency_by_age_group.png
+│   ├── average_claim_frequency_by_vehicle_age.png
+│   └── negative_binomial_calibration.png
+├── output/
 │   ├── claims_clean.rds
 │   ├── frequency_model_results.csv
 │   ├── frequency_model_relativities.csv
 │   ├── severity_validation.csv
 │   └── severity_correlation.csv
 ├── .gitignore
-├── insurance_claims-analysis.Rproj
+├── Insurance-Claims-Analysis.Rproj
+├── LICENSE
 └── README.md
 
 ## Dataset
