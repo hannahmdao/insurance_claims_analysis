@@ -1,0 +1,8 @@
+metric,value
+Poisson AIC,80713.20167173153
+Final Negative Binomial AIC,70835.33219702543
+Final Pearson dispersion,0.8782825869751072
+Test observed mean frequency,0.5205114544485882
+Test predicted mean frequency,0.5081015269394967
+Test RMSE,1.0275705396991839
+Test MAE,0.7444976854063224
