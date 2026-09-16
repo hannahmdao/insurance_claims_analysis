@@ -2,33 +2,35 @@
 
 ## Overview
 
-This project analyzes automobile insurance policy data using R to investigate factors
-associated with claim frequency and evaluate the substainability of the availability claim
-amount variable for severity modeling.
+This project analyzes automobile insurance policy data using R to investigate factors 
+associated with claim frequency and assess whether the available claim_amt variable 
+is suitable for severity modeling.
 
-This analyses uses generalized linear models (GLMs), model diagnostics, out-of-sample 
-validation, and actuarial risk relativities to evaluate claim frequency,
+This analysis uses generalized linear models (GLMs), model diagnostics, out-of-sample 
+validation, and actuarial risk relativities to evaluate claim frequency, and identify 
+factors associated with risk. 
 
-A key dat-quality finding was that the available claim_amt variable does not behave as a 
-conventional insurance claim severity measure. This limitation is documented as part of 
-the analyses rather than using an innapropriate severity model. 
+A key data-quality finding was that the available claim_amt variable does not behave
+like a conventional insurance claim severity measure. This limitation is documented 
+as part of the analysis rather than using an innapropriate severity model. 
 
 ## Objectives 
 
-- Explore the distribution of insurance claim frequency
+- Explore the distribution of insurance claim frequency.
 - Investigate the relationship between policyholder, vehicle, policy characteristics
 and claim frequency.
 - Fit and compare Poisson and Negative Binomial frequency models.
 - Diagnose and address overdispersion.
 - Evaluate model performance using a holdout test set.
-- Calculate interpretable claim frequency risk relatives
-- Assess whether the available claim amount variable is suitable for severity modeling
+- Calculate interpretable claim frequency risk relativities.
+- Assess whether the available claim amount variable is suitable for severity modeling.
 
 ## Methodology
 
-Exploratory Data Analysis:
+### Exploratory Data Analysis
 
-The analysis examined claim frequency across
+The analysis examined claim frequency across the following policyholder, vehicle,
+and policy characteristics: 
 - Age
 - Gender
 - Marital status
@@ -41,36 +43,34 @@ The analysis examined claim frequency across
 - Vehicle manufacturer
 - Household income
 
-The data was checked for missing values, duplicate policy IDs, invalid or inconsistent 
-categorical values, and character-encoding issues
+The data was assessed for missing values, duplicate policy IDs, invalid or inconsistent 
+categorical values, and character-encoding issues.
 
-
-Claim Frequency Modeling: 
+### Claim Frequency Modeling
 
 Claim frequency was initially modeled using a Poisson GLM.
 
-The variance of the frequency was approximately twice its mean, indicating significant
-overdispersion. The Poisson model had a Pearson dispersion statistic of approximately 2.02
+The variance of claim frequency was approximately twice its mean, indicating significant
+overdispersion. The Poisson model had a Pearson dispersion statistic of approximately 2.02.
 
-Therefore a Negative Binomial GLM was fitted to account for additional dispersion 
+Therefore, a Negative Binomial GLM was fitted to account for additional dispersion. 
 
-The final model consolidated vehicle manufacturer with fewer than 100 policies into an "Other"
-category to reduce instability from sparse manufacturer groups.
+To reduce instability caused by sparse manufacturer groups, vehicle manufacturers 
+with fewer than 100 policies were consolidated into an "Other" category in the 
+final model.
 
-
-Model Validation: 
+### Model Validation
 
 The final model was evaluated using an 80/20 training and test split.
 
-Out-of-sample performance was assessed using
+Out-of-sample performance was assessed using:
 
 - Mean Absolute Error (MAE)
 - Root Mean Squared Error (RMSE)
 - Aggregate observed versus predicted claim frequency 
 - Prediction-decile calibration 
 
-
-##Results
+## Results
 
 Frequency Model:
   Metric                            Result 
@@ -82,53 +82,56 @@ Frequency Model:
 - Test RMSE                         1.030
 - Test MAE                          0.744
 
-The Negative Binomial model substantially reduced AIC relative to the Poisson model 
-and reduced the Pearson dispersion statistic to below 1, indicating that substantial 
-residual overdispersion was no longer present. 
+The Negative Binomial model substantially reduced AIC compared with the Poisson 
+model. The final Pearson dispersion statistic decreased to 0.878, indicating that 
+the substantial overdispersion observed in the initial Poisson model was no longer 
+present in the final model.
 
+On the holdout test set, the predicted mean claim frequency (0.508) was close to
+the observed mean (0.521), indicating reasonable aggregate calibration.
 
-Risk Relativities: 
+### Risk Relativities
 
 Using Ford as the reference manufacturer, the final model produced the following 
-manufacturer relativities
+manufacturer relativities:
 
 Manufacturer    Relativity vs. Ford     95% Confidence Interval
 Geo             1.61                    1.07-2.42
 Lexus           0.818                   0.678-0.988
 Saab            0.727                   0.554-0.954
 
-These estimated represent associations with the analyzed dataset after contrlling for 
-other variables included in the model. They should not be interpreted as causal effects
-or direclty applicable insurance pricing factors
+These estimated represent associations with the analyzed dataset after controlling 
+for other the variables included in the model. They should not be interpreted as 
+causal effects or direclty applicable insurance pricing factors.
 
+### Severity Data Validation
 
-Severity Data Validation:
+The available claim_amt variable was assessed as a potential measure of claim severity.
 
-The available claim_amt variable was assessed as a potential severity measure.
+Several characteristics suggested that it does not behave like a conventional claim 
+severity variable:
 
-Policies with no reported claims had positive claim amoounts, and average claim amounts
-were nearly identical between policies with and without reported claims.
+- Policies with no reported claims had positive claim_amt values.
+- Average claim amounts were nearly identical between policies with and without 
+reported claims (50,125 and 49,992 respectively).
+- The correlation between claim frequency and claim_amt was approximately 0.002.
 
-No reported claim: approx. 49,992
-At least on reported claim: approx. 50,125
-
-The correlation between claim frequency and claim amount was approx. 0.002.
-
-The characteristic indicate that claim_amt does not appear to represent conventional claim
-severity. Therefore a gamma severity model was not applied:
-
+These characteristics suggest that claim_amt does not represent conventional claim 
+severity in the analyzed dataset. Therefore, a Gamma severity model was not applied, 
+avoiding the use of an inappropriate modeling assumption.
 
 ## Limitations
 - The dataset does not contain a conventional exposure variable such as policy-years.
-Therefore the frequency model treats each observation as an equivalant policy-period 
-rather than applying exposure effect.
-- The available claim amount variable does not appear suitable for conventional severity
-modeling.
-- Vehicle manufacturer is represented by many categories, requiring consolidation of 
-sparse groups.
-- The dataset is observational, so model coefficients should be interpreted as associations
-rather than causal effects.
-- Test-set performance depends on the selected random train/test split/
+As a result, the frequency model treats each observation as an equivalent policy 
+period rather than explicitly accounting for differences in exposure.
+- The available claim amount variable does not appear suitable for conventional 
+severity modeling.
+- Vehicle manufacturer contains many categories, requiring sparse groups to be 
+consolidated to improve model stability.
+- The dataset is observational, so model coefficients should be interpreted as 
+associations rather than causal effects.
+- Test-set performance depends on the selected random train/test split and may vary 
+with a different partition of the data.
 
 ## Tools
 
@@ -171,9 +174,10 @@ Insurance-Claims-Analysis/
 ├── LICENSE
 └── README.md
 
+```
 ## Dataset
 
-This project uses the Car Insurance Policies dataset by Nidhi Yadav from Kaggle.
+This project uses the Car Insurance Policies dataset by Nidhi Yadav, sourced from Kaggle.
 
 The dataset is distributed under the Apache License, Version 2.0 (Apache-2.0).
 
@@ -182,8 +186,13 @@ License: https://www.apache.org/licenses/LICENSE-2.0
 
 ## Reproducibility
 
-The analysis uses a fixed random seed for the train/test split so that the model 
-validation results can be reproduced. 
+The analysis uses a fixed random seed for the train/test split, allowing the model 
+validation results to be reproduced consistently.
 
-All analysis is organized into sequential R scripts covering data cleaning,
-exploratroy analysis, frequency modeling, and severity-data validation.
+The analysis is organized into sequential R scripts covering:
+
+- Data cleaning and quality checks
+- Exploratory data analysis
+- Claim frequency modeling
+- Model validation
+- Severity data validation
