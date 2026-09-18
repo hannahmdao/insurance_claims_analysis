@@ -20,7 +20,7 @@ library(lubridate)
 # ============================================================
 
 # Import raw insurance policy data from excel file (from kaggle).
-claims <- read_excel("data/Car Insurance Policies .Ixlsx")
+claims <- read_excel("data/Car Insurance Policies .xlsx")
 
 # ============================================================
 # 2. Data Type Conversion

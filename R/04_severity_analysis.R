@@ -4,19 +4,18 @@
 # Purpose: claim severity data validation
 # ============================================================
 
-# load packages
+# Load packages.
 
 library(tidyverse)
 
-# import finalized cleaned dataset
+# Import finalized cleaned dataset.
 claims <- readRDS("output/claims_clean.rds")
 
 # ============================================================
-# 1. severity variable validation 
+# 1. Severity Variable Validation 
 # ============================================================
 
-# examine claim amounts for policies with and without reported 
-# claims. 
+# Examine claim amounts for policies with and without reported claims. 
 
 severity_validation <- claims %>%
   mutate(
@@ -33,7 +32,7 @@ severity_validation <- claims %>%
 
 severity_validation
 
-# calculate correlation between claim frequency and claim amount. 
+# Calculate the correlation between claim frequency and claim amount. 
 
 severity_correlation <- cor(
   claims$claim_freq, 
@@ -43,26 +42,26 @@ severity_correlation <- cor(
 severity_correlation
 
 # ============================================================
-# 2. severity analysis conclusion 
+# 2. Severity Analysis Conclusion 
 # ============================================================
 
-# the claim amount variable does not seem to represent conventional 
+# The claim amount variable does not seem to represent conventional 
 # insurance claim severity. policies with no reported claims have 
 # positive claim amounts, and the average claim amount is very close 
 # for policies with and without claims. the correlation between claim
 # frequency and amount is nearly 0.
 
-# therefore claim_amt is not used as the response variable 
+# Therefore, claim_amt is not used as the response variable.
 
-# this limitation is documented rather than addressed by imposing an
-# innapropriate Gamma severity model on available data
+# This limitation is documented rather than addressed by imposing an
+# inapropriate Gamma severity model on available data.
 
 
 # ============================================================
-# 2. save severity validation results
+# 2. Save Severity Validation Results
 # ============================================================
 
-# save severity validation results for use in documentation and final 
+# Save severity validation results for use in documentation and final 
 # analysis summary. 
 
 write_csv(

@@ -4,20 +4,21 @@
 # Purpose: claim frequency modeling 
 # ============================================================
 
-# load packages
+# Load packages.
 
 library(tidyverse)
 library(MASS)
 library(broom)
 
 # Import the cleaned dataset.
+
 claims <- readRDS("output/claims_clean.rds")
 
-# set a random seed so that the train/test split can be reproduced
-set.seed(127)
+# Set a random seed so that the train/test split can be reproduced. 
 
-# randomly assign 80% of policies to the training set and 20% to the
-# test set
+set.seed(127) # 127 chosen arbitrarily (my birthday).
+
+# Randomly assign 80% of policies to the training set and 20% to the test set.
 
 train_index <- sample(
   seq_len(nrow(claims)),
@@ -28,22 +29,22 @@ train_data <- claims[train_index, ]
 
 test_data <- claims[-train_index, ]
 
-# confirm number of observation in each dataset
+# Confirm number of observation in each dataset.
+
 nrow(train_data)
 nrow(test_data)
 
 # ============================================================
-# 1. baseline Poisson Model 
+# 1. Baseline Poisson Model 
 # ============================================================
 
-# fit a Poisson generalized linear model to claim frequency.
+# Fit a Poisson generalized linear model to claim frequency.
 
-# each observation represents one policy in the dataset.
-# policy exposure duration is not provided, therefore no exposure   
-# offset is included. 
+# Each observation represents one policy in the dataset. Policy exposure duration 
+# is not provided, therefore no exposure offset is included. 
 
-# this model examines the relationship between claim frequency
-# and selected policyholder, vehicle, and policy characteristics.
+# This model examines the relationship between claim frequency, selected policyholder, 
+# vehicle, and policy characteristics.
 
 poisson_model <- glm(
   claim_freq ~
@@ -62,13 +63,14 @@ poisson_model <- glm(
 )
 
 # Display the model summary.
+
 summary(poisson_model)
 
 # ============================================================
-# 2. poisson model dispersion 
+# 2. Poisson Model Dispersion 
 # ============================================================
 
-# calculate the pearson dispersion statistic for the poisson model
+# Calculate the Pearson dispersion statistic for the Poisson model.
 
 pearson_dispersion <- sum(
   residuals(poisson_model, type = "pearson")^2
@@ -78,11 +80,11 @@ pearson_dispersion
 
 # ============================================================
 # 3. negative binomial model 
-# 3. negative binomial model 
+# 3. Negative Binomial Model 
 # ============================================================
 
-# fit a negative binomial generalized linear model to account for
-# overdispersion that is in the poisson frequency model
+# Fit a Negative Binomial generalized linear model to account for overdispersion 
+# that is in the Poisson frequency model.
 
 negative_binomial_model <- glm.nb(
   claim_freq ~
@@ -100,23 +102,23 @@ negative_binomial_model <- glm.nb(
 )
 
 # Display the model summary.
+
 summary(negative_binomial_model)
 
 # ============================================================
-# 4. model comparison 
+# 4. Model Comparison 
 # ============================================================
 
-# Compare the Akaike Information Criterion (AIC) of the Poisson
-# and Negative Binomial models.
+# Compare the Akaike Information Criterion (AIC) of the Poisson and Negative
+# Binomial models.
 
 AIC(
   poisson_model,
   negative_binomial_model
 )
 
-# calculate the pearson dispersion statistic for the Negative 
-# Binomial model to assess whether significant overdispersion
-# remains. 
+# Calculate the Pearson dispersion statistic for the Negative Binomial model to 
+# assess whether significant overdispersion remains. 
 
 nb_pearson_dispersion <- sum(
   residuals(
@@ -127,21 +129,19 @@ nb_pearson_dispersion <- sum(
 
 nb_pearson_dispersion
 
-# the claim frequency data show significant overdispersion relative 
-# to the Poisson assumption. Therefore a Negative Binomial GLM was fitted 
+# The claim frequency data shows significant overdispersion relative 
+# to the Poisson assumption. Therefore, a Negative Binomial GLM was fitted 
 # to account for additional variability. The Negative Binomial substantially
 # improved the model fit, reducing the AIC from 80,713.20 for the Poisson 
-# model to 70,868.31. The Pearson dispersion statistic is 0.876,
-# indicating that substantial residual overdispersion is no longer 
-# present 
+# model to 70,868.31. The Pearson dispersion statistic is 0.876, indicating that 
+# substantial residual overdispersion is no longer present.
 
 # ============================================================
-# 5. negative binomial model diagnostics 
+# 5. Negative Binomial Model Diagnostics 
 # ============================================================
 
-# generate fitted claim frequencies from the Negative Binomial model 
-# to represent the expected number of claims per policy based on
-# characteristics in the model 
+# Generate fitted claim frequencies from the Negative Binomial model to represent 
+# the expected number of claims per policy based on characteristics in the model. 
 
 claims <- claims %>%
   mutate(
@@ -151,9 +151,9 @@ claims <- claims %>%
     )
   )
 
-# Compare the observed and predicted average claim frequency.
-# This provides a basic check of whether the model reproduces the
-# overall level of claim frequency in the dataset.
+# Compare the observed and predicted average claim frequency.To provide a basic 
+# check of whether the model reproduces the overall level of claim frequency in 
+# the dataset.
 
 claims %>% 
   summarise(
@@ -161,8 +161,8 @@ claims %>%
     predicted_mean = mean(predicted_freq)
   )
 
-# Compare observed and predicted claim frequency by the number
-# of claims reported by each policy.
+# Compare observed and predicted claim frequency by the number of claims reported 
+# by each policy.
 
 frequency_comparison <- claims %>%
   group_by(claim_freq) %>%
@@ -175,19 +175,18 @@ frequency_comparison <- claims %>%
 frequency_comparison
 
 # ============================================================
-# 6. frequency model calibration 
+# 6. Frequency Model Calibration 
 # ============================================================
 
-# divide policies into ten groups based on their predicted claim 
-# frequency to compare across predicted levels of risk.
+# Divide policies into ten groups based on their predicted claim frequency to 
+# compare across predicted levels of risk.
 
 claims <- claims %>%
   mutate(
     prediction_decile = ntile(predicted_freq, 10)
   )
 
-# Compare average observed and predicted claim frequency within
-# each prediction decile.
+# Compare average observed and predicted claim frequency within each prediction decile.
 
 calibration_table <- claims %>%
   group_by(prediction_decile) %>%
@@ -200,8 +199,8 @@ calibration_table <- claims %>%
 
 calibration_table
 
-# Create a calibration plot comparing observed and predicted
-# claim frequency across prediction deciles.
+# Create a calibration plot comparing observed and predicted claim frequency 
+# across prediction deciles.
 
 ggplot(
   calibration_table,
@@ -234,7 +233,8 @@ ggplot(
   ) +
   theme_minimal()
 
-## save plot 
+## Save plot.
+
 ggsave(
   "figures/negative_binomial_calibration.png",
   width = 8,
@@ -243,15 +243,15 @@ ggsave(
 )
 
 # the calibration results show that observed claim frequency generally increases
-# across prediction deciles, consistent with the model's 
-# predicted risk ranking. observed and predicted frequencies are also reasonably 
-# close, indicating reasonable in sample calibration. 
+# across prediction deciles, consistent with the model's predicted risk ranking. 
+# Observed and predicted frequencies are also reasonably close, indicating reasonable 
+# in sample calibration. 
  
 # ============================================================
-# 7. out-of-sample validation 
+# 7. Out-of-Sample Validation 
 # ============================================================
 
-# refit negative binomial model using only training data. 
+# Refit negative binomial model using only training data. 
 
 nb_train <- glm.nb(
   claim_freq~
@@ -268,7 +268,7 @@ nb_train <- glm.nb(
   data = train_data
 )
 
-# generate predicted claim frequencies for test set 
+# Generate predicted claim frequencies for the test set.
 
 test_data <- test_data %>% 
   mutate(
@@ -279,8 +279,7 @@ test_data <- test_data %>%
     )
   )
 
-# compare average observed and predicted data claim frequency in the 
-# test dataset
+# Compare average observed and predicted data claim frequency in the test dataset.
 
 test_data %>%
   summarise(
@@ -288,7 +287,7 @@ test_data %>%
     predicted_mean = mean(claim_freq)
   )
 
-# compare observed and predicted claim frequency across prediction deciles in 
+# Compare observed and predicted claim frequency across prediction deciles in 
 # the test dataset. 
 
 test_calibration <- test_data %>%
@@ -306,14 +305,14 @@ test_calibration <- test_data %>%
 test_calibration
 
 
-# the negative binomial model maintained increasing predicted claim frequency
+# The Negative Binomial model maintained increasing predicted claim frequency
 # across test-set risk deciles. However, observed claim frequences were 
 # substantially more variable across deciles, indicating an out-of-sample 
 # calibration is less stable than the in-calibration.
 
-# calculate predictikon error metric on the test dataset. 
-# measure typical magnitude of prediction error 
-# measure average absolute difference between observed and predicted claim 
+# Calculate a prediction error metric on the test dataset. 
+# Measure typical magnitude of prediction error 
+# Measure average absolute difference between observed and predicted claim 
 # frequency with MAE
 
 test_performance <- test_data %>%
@@ -325,11 +324,11 @@ test_performance <- test_data %>%
 test_performance
 
 # ============================================================
-# 8. negative binomial risk relativities 
+# 8. Negative Binomial Risk Relativities 
 # ============================================================
 
-# extract and convert negative binomial coefficients from log scale to 
-# multiplicative risk relativities
+# Extract and convert negative binomial coefficients from log scale to 
+# multiplicative risk relativities.
 
 nb_coefficients <- tidy(
   negative_binomial_model
@@ -357,8 +356,8 @@ nb_relativities <- nb_coefficients %>%
     )
   )
 
-# identify model terms with the largest and smallest estimated claim 
-# frequency relativities 
+# Identify model terms with the largest and smallest estimated claim 
+# frequency relativities .
 
 highest_relativities <- nb_relativities %>%
   filter(term != "(Intercept)") %>%
@@ -370,19 +369,18 @@ lowest_relativities <- nb_relativities %>%
   arrange(relativity) %>%
   slice_head(n = 10)
 
-# examine policy counts by car manufacturer
+# Examine policy counts by car manufacturer.
 
 claims %>%
   count(car_make, sort = TRUE) %>%
   slice_tail(n = 20)
 
 # ============================================================
-# 9. manufacturer category consolidation  
+# 9. Manufacturer Category Consolidation  
 # ============================================================
 
-# identify and combine manufacturers with fewer than 100 policies into 
-# an "Other" category to reduce instability caused by small manufacturer
-# groups.
+# Identify and combine manufacturers with fewer than 100 policies into an "Other" 
+# category to reduce instability caused by small manufacturer groups.
 
 manufacturer_counts <- claims %>%
   count(car_make)
@@ -402,13 +400,14 @@ claims <- claims %>%
   ) %>%
   dplyr::select(-n)
 
-# review remaining 
+# Review remaining. 
 
 claims %>%
   count(car_make_grouped, sort = TRUE) %>%
   slice_tail(n = 20)
 
-# refit Negative Binomial model using consolidated manufacturer variable 
+# Refit Negative Binomial model using consolidated manufacturer variable.
+
 negative_binomial_grouped <- glm.nb(
   claim_freq ~
     age +
@@ -424,7 +423,7 @@ negative_binomial_grouped <- glm.nb(
   data = claims
 )
 
-# compare original and consolidated Negative Binomial models
+# Compare the original and consolidated Negative Binomial models.
 
 AIC(
   negative_binomial_model,
@@ -432,10 +431,10 @@ AIC(
 )
 
 # ============================================================
-# 10. final model train/test validation 
+# 10. Final Model Train/Test Validation 
 # ============================================================
 
-# recreate train/test split using consolidated manufacturer variable 
+# Recreate train/test split using consolidated manufacturer variable.
 
 set.seed(127)
 
@@ -464,7 +463,7 @@ test_grouped <- test_grouped %>%
     )
   )
 
-# fit final Negative Binomial model using training data.
+# Fit the final Negative Binomial model using training data.
 
 negative_binomial_final <- glm.nb(
   claim_freq ~
@@ -481,7 +480,7 @@ negative_binomial_final <- glm.nb(
   data = train_grouped
 )
 
-# generate predictions for test data
+# Generate predictions for test data.
 
 test_grouped <- test_grouped %>%
   mutate(
@@ -492,7 +491,7 @@ test_grouped <- test_grouped %>%
     )
   )
 
-# calculate out of sample error
+# Calculate out of sample error.
 
 final_test_performance <- test_grouped %>%
   summarise(
@@ -502,7 +501,7 @@ final_test_performance <- test_grouped %>%
     mae = mean(abs(claim_freq - predicted_freq))
   )
 
-# calculate Pearson dispersion statistic for final Negative Binomial model
+# Calculate Pearson dispersion statistic for final Negative Binomial model.
 
 final_pearson_dispersion <- sum(
   residuals(
@@ -515,12 +514,11 @@ final_pearson_dispersion
 
 
 # ============================================================
-# 11. final model risk relativities 
+# 11. Final Model Risk Relativities 
 # ============================================================
 
-# extract and convert coefficients from the final Negative Binomial 
-# model and convert from log scale into multiplicative claim frequency
-# relativities
+# Extract and convert coefficients from the final Negative Binomial model and convert 
+# from log scale into multiplicative claim frequency relativities.
 
 # 95% confidence interval 
 
@@ -550,8 +548,7 @@ final_relativities <- final_coefficients %>%
 
 final_relativities
 
-# display final model with confidence intervals that exclude a 
-# relativity of 1
+# Display final model with confidence intervals that exclude a relativity of 1.
 
 final_relativities %>%
   filter(
@@ -560,11 +557,10 @@ final_relativities %>%
   )
 
 # ============================================================
-# 12. final frequency model results
+# 12. Final Frequency Model Results
 # ============================================================
 
-# create summary of the final Negative Binomial model for use in 
-# project documentation 
+# Create summary of the final Negative Binomial model for use in project documentation.
 
 frequency_model_results <- tibble(
   metric = c(
@@ -589,20 +585,22 @@ frequency_model_results <- tibble(
 
 frequency_model_results
 
-# save frequency model results 
+# Save frequency model results.
+
 write_csv(
   frequency_model_results,
   "output/frequency_model_results.csv"
 )
 
-# save risk relativities 
+# Save risk relativities 
+
 write_csv(
   final_relativities,
   "output/frequency_model_relativities.csv"
 )
 
 # ============================================================
-# 13. frequency model conclusions 
+# 13. Frequency Model Conclusions 
 # ============================================================
 
 # The claim frequency data show substantial overdispersion relative 
@@ -618,5 +616,5 @@ write_csv(
 # frequency for Geo and lower claim frequency for Lexus and Saab.
 # These results represent associations within the dataset and should not
 # be interpreted as causal effects or directly applied as an insurance 
-# pricing factor
+# pricing factor.
 

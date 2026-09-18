@@ -4,28 +4,27 @@
 # Purpose: Exploratory data analysis
 # ============================================================
 
-# load packages
+# Load packages
 library(tidyverse)
 library(scales)
 
 # ============================================================
-# 1.claim frequency distribution
+# 1.Claim Frequency Distribution
 # ============================================================
 
-# examine number of claims reported per policy.
-# this provides an initial view of the distribution of the 
-# frequency response variable used in subsequent models
-
-# create a bar chart showing the distribution of claim frequency
-# this visualization will highlight the concentration of policies
-# with zero claims and the relatively small number of policies with 
-# multiple claims
+# Examine the number of claims reported per policy to provide an initial view of 
+# the distribution of the frequency response. 
 
 claims %>%
   count(claim_freq) %>%
   mutate(
     proportion = n / sum(n)
   ) %>%
+  
+  # Create a bar chart showing the distribution of claim frequency. To highlight 
+  # the concentration of policies with zero claims and the number of policies with 
+  # multiple claims.
+
   ggplot(aes(x = factor(claim_freq), y = n)) +
   geom_col() +
   geom_text(
@@ -39,7 +38,7 @@ claims %>%
   ) +
   theme_minimal()
 
-## save plot 
+## Save plot 
 ggsave(
   "figures/claim_frequency_distribution.png",
   width = 8,
@@ -48,15 +47,13 @@ ggsave(
 )
 
 # ============================================================
-# 2.claim frequency by car use 
+# 2.Claim Frequency by Car Use 
 # ============================================================
 
-# calculate the average number of claims per policy for each 
-# type of vehicle use 
+# Calculate claim probability and mean claim frequency by car use
 
-# create a bar chart comparing average claim frequency by car 
-# use. This provides a visual comparison of claim frequency 
-# between private and commercial use.
+# Create a bar chart comparing average claim frequency by car 
+# use (private or commercial). 
 
 claims %>%
   group_by(car_use) %>%
@@ -79,42 +76,26 @@ claims %>%
   theme_minimal()
 
 # ============================================================
-# 3.claim frequency by coverage zone
+# 3.Claim Frequency by Coverage Zone
 # ============================================================
 
-# calculate the average number of claims per policy for each 
-# coverage zone to identify potential geographic differences
+# Calulate the mean claim frequency per coverage zone. 
 
-claims %>% 
-  group_by(coverage_zone) %>% 
-  summarise(
-    policies = n(),
-    mean_claim_freq = mean(claim_freq)
-  )
+# Using  the summarise_freq function created and stored in the "00_functions.R" script.
+
+summarise_freq(claims, coverage_zone, claim_freq) 
 
 # ============================================================
-# 4.claim frequency by policy holder age
+# 4.Claim Frequency by Policy Holder Age
 # ============================================================
 
-# calculate the average number of claims per policy for each 
-# policyholder age to examine whether claim frequency varies 
-# across different age groups.
+# Calculate the mean claim frequency per policyholder age to examine whether 
+# claim frequency varies across different age groups.
 
-claims %>% 
-  group_by(age) %>%
-  summarise(
-    policies = n(),
-    mean_claim_freq = mean(claim_freq)
-  ) 
+summarise_freq(claims, age, claim_freq)
 
-# create age groups in 10-year intervals to reduce random variation
-# between individual ages and provide a clearer view of the 
-# relationship between age and claim frequency. (individual ages looked 
-# looked too noisy and age 79 has way fewer observations than the rest
-# of the age groups, skewing the graph.)
-
-# Create a bar chart comparing average claim frequency across
-# policyholder age groups.
+# Create age groups in 10-year intervals to reduce random variation between individual 
+# ages and provide a clearer view of the relationship between age and claim frequency. 
 
 claims %>%
   mutate(
@@ -124,12 +105,16 @@ claims %>%
       right = FALSE,
       labels = c("20-29", "30-39", "40-49", "50-59", "60-69", "70-79")
     )
+    
+  # Calculate the average number of claims per policy for each policyholder age group.
   ) %>%
   group_by(age_group) %>%
   summarise(
     policies = n(),
     mean_claim_freq = mean(claim_freq)
-  )  %>%
+  )  %>% 
+  
+  # Create a bar chart comparing average claim frequency across policyholder age groups.
   ggplot(aes(x = age_group, y = mean_claim_freq)) +
   geom_col() +
   geom_text(
@@ -143,7 +128,7 @@ claims %>%
   ) +
   theme_minimal()
 
-## save plot 
+## Save plot.
 ggsave(
   "figures/average_claim_frequency_by_age_group.png",
   width = 8,
@@ -152,46 +137,31 @@ ggsave(
 )
 
 # ============================================================
-# 5. claim frequency by gender 
+# 5. Claim Frequency by Gender 
 # ============================================================
 
-# Calculate the average number of claims per policy for each
-# gender to examine whether claim frequency differs between
-# the two groups in the dataset.
+# Calculate the mean claim frequency and claim probability for each gender to 
+# examine whether claim frequency differs between the two groups in the dataset.
 
-claims %>%
-  group_by(gender) %>%
-  summarise(
-    policies = n(),
-    mean_Claim_freq = mean(claim_freq),
-    claim_probability = mean(claim_freq > 0)
-  )
+# Using  the summarise_claim function created and stored in the "00_functions.R" script.
+
+summarise_claim(claims, gender, claim_freq)
 
 # ============================================================
-# 6. claim frequency by marital status
+# 6. Claim Frequency by Marital Status
 # ============================================================
 
-# Calculate the average number of claims per policy for each
-# marital status to examine whether claim frequency varies
-# across policyholder groups.
+# Calculate the mean claim frequency and claim probability for each marital status 
+# to examine whether claim frequency differs between the groups in the dataset. 
 
-claims %>%
-  group_by(marital_status) %>%
-  summarise(
-    policies= n(),
-    mean_claim_freq = mean(claim_freq),
-    claim_probability = mean(claim_freq > 0)
-  )
+summarise_claim(claims, marital_status, claim_freq)
 
 # ============================================================
-# 7. claim frequency by vehicle age
+# 7. Claim Frequency by Vehicle Age
 # ============================================================
 
-# Group vehicles into age bands to examine whether claim
-# frequency varies across different vehicle age ranges.
-
-# Create a bar chart comparing average claim frequency across
-# vehicle age groups.
+# Group vehicles into age bands to examine whether claim frequency varies across 
+# different vehicle age ranges.
 
 claims %>% 
   mutate(
@@ -215,6 +185,9 @@ claims %>%
     mean_claim_freq = mean(claim_freq),
     claim_probability = mean(claim_freq > 0)
   )%>%
+  
+  # Create a bar chart comparing average claim frequency across
+  # vehicle age groups.
   ggplot(aes(x = vehicle_age_group, y = mean_claim_freq)) +
   geom_col() +
   geom_text(
@@ -228,7 +201,8 @@ claims %>%
   ) +
   theme_minimal()
 
-## save plot 
+## Save plot.
+
 ggsave(
   "figures/average_claim_frequency_by_vehicle_age.png",
   width = 8,
@@ -237,58 +211,39 @@ ggsave(
 )
 
 # ============================================================
-# 8. claim frequency by education 
+# 8. Claim Frequency by Education 
 # ============================================================
 
-# Calculate the average number of claims per policy for each
-# education level to examine whether claim frequency varies
-# across policyholder groups.
+# Calculate the mean claim frequency and claim probability per policy for each
+# education level to examine whether claim frequency varies across policyholder groups.
 
-claims %>%
-  group_by(education) %>%
-  summarise(
-    policies = n(),
-    mean_claim_freq = mean(claim_freq),
-    claim_probability = mean(claim_freq > 0)
-  )
+summarise_claim(claims, education, claim_freq)
 
 # ============================================================
-# 9. claim frequency by number of kids driving 
+# 9. Claim Frequency by Number of Kids Driving 
 # ============================================================
 
-# Calculate the average number of claims per policy based on
+# Calculate the mean claim frequency and claim probability per policy based on
 # the number of children who are driving in the household.
 
-claims %>%
-  group_by(kids_driving) %>%
-  summarise(
-    policies = n(),
-    mean_claim_freq = mean(claim_freq),
-    claim_probability = mean(claim_freq > 0)
-  )
-# ============================================================
-# 10. claim frequency by parent status 
-# ============================================================
-
-# Calculate the average number of claims per policy for
-# policyholders with and without children.
-
-claims %>%
-  group_by(parent) %>%
-  summarise(
-    policies = n(),
-    mean_claim_freq = mean(claim_freq),
-    claim_probability = mean(claim_freq > 0)
-  )
+summarise_claim(claims, kids_driving, claim_freq)
 
 # ============================================================
-# 11. claim frequency by parent status 
+# 10. Claim Frequency by Parent Status 
 # ============================================================
 
-# Calculate claim frequency by vehicle manufacturer.
-# Manufacturers with very small policy counts are excluded
-# from the comparison because their observed claim frequencies
-# may be highly unstable.
+# Calculate the mean claim frequency and claim probability per policy for policyholders 
+# with and without children.
+
+summarise_claim(claims, parent, claim_freq)
+
+# ============================================================
+# 11. claim Frequency by vehicle Manufacturer
+# ============================================================
+
+# Calculate mean claim frequency and claim probability by vehicle manufacturer.
+# Manufacturers with very small policy counts are excluded from the comparison 
+# because their observed claim frequencies may be highly unstable.
 
 manufacturer_frequency <- claims %>%
   group_by(car_make) %>%
@@ -299,22 +254,19 @@ manufacturer_frequency <- claims %>%
   ) %>%
   filter(policies >= 100)
 
-# Identify the 10 manufacturers with the lowest observed claim
-# frequencies among those meeting the minimum policy threshold.
+# Identify the 10 manufacturers with the lowest observed claim frequencies among 
+# those meeting the minimum policy threshold.
 
 lowest_manufacturers <- manufacturer_frequency %>%
   arrange(mean_claim_freq) %>%
   slice_head(n = 10)
 
-# Identify the 10 manufacturers with the highest observed claim
-# frequencies among those meeting the minimum policy threshold.
-
+# Identify the 10 manufacturers with the highest observed claim frequencies. 
 highest_manufacturers <- manufacturer_frequency %>%
   arrange(desc(mean_claim_freq)) %>%
   slice_head(n = 10)
 
-# Combine the highest and lowest frequency manufacturers for
-# visualization.
+# Combine the highest and lowest frequency manufacturers for visualization. 
 
 manufacturer_plot <- bind_rows(
   lowest_manufacturers,
@@ -324,8 +276,7 @@ manufacturer_plot <- bind_rows(
     car_make = reorder(car_make, mean_claim_freq)
   )
 
-# Create a bar chart comparing observed claim frequency for the
-# selected manufacturers.
+# Create a bar chart comparing observed claim frequency for the selected manufacturers.
 
 ggplot(
   manufacturer_plot,
@@ -347,7 +298,8 @@ ggplot(
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
 
-## save plot 
+## Save plot.
+
 ggsave(
   "figures/claim_frequency_by_car_manufacturer.png",
   width = 8,
@@ -356,16 +308,16 @@ ggsave(
 )
 
 # ============================================================
-# 12. claim amount distribution 
+# 12. Claim Amount Distribution 
 # ============================================================
 
-# Examine the distribution of claim amounts to understand its
-# range, central tendency, and variability before determining
-# whether it can be used as a claim severity measure.
+# Examine the distribution of claim amounts to understand its range, central tendency, 
+# and variability before determining whether it can be used as a claim severity measure.
 
 summary(claims$claim_amt)
 
 # Calculate key statistics for the claim amount variable.
+
 claims %>%
   summarise(
     policies = n(),
@@ -386,9 +338,9 @@ ggplot(claims, aes(x = claim_amt)) +
     y = "Number of Policies"
   ) +
   theme_minimal()
-# Compare claim amounts across different claim frequency levels.
-# This helps determine whether claim_amt is related to the
-# number of claims reported by a policyholder.
+
+# Compare claim amounts across different claim frequency levels to determine whether 
+# claim_amt is related to the number of claims reported by a policyholder.
 
 claims %>%
   group_by(claim_freq) %>%
@@ -398,31 +350,30 @@ claims %>%
     median_claim_amt = median(claim_amt)
   )
 
-# examine the linear association between claim frequency and claim amount
+# Examine the linear association between claim frequency and claim amount.
 
 cor(
   claims$claim_freq,
   claims$claim_amt
 )
 
-# examine percentile distributions
+# Examine percentile distributions.
 
 quantile(
   claims$claim_amt,
   probs = c(0, 0.01, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99, 1)
 )
 
-# the claim amount variable does not appear to behave conventionally. claim 
-# amounts are positive even with zero reported claims, and claim amount has 
-# almost no correlation with claim frequency. Therefore claim_amnt is excluded
-# from the severity model component of this analysis 
+# The claim amount variable does not appear to behave conventionally. Claim amounts 
+# are positive even with zero reported claims, and claim amount has almost no correlation 
+# with claim frequency. Therefore claim_amnt is excluded from the severity model component of this analysis 
 
 # ============================================================
-# 13. claim frequency by household income 
+# 13. Claim Frequency by Household Income 
 # ============================================================
 
-# Divide household income into approximately equal-sized groups
-# to examine whether claim frequency varies across income levels.
+# Divide household income into approximately equal-sized groups to examine whether 
+# claim frequency varies across income levels.
 
 claims %>%
   mutate(
@@ -437,7 +388,7 @@ claims %>%
   )
 
 # ============================================================
-# 14. baseline claim frequency 
+# 14. Baseline Claim Frequency 
 # ============================================================
 
 # Calculate the overall average number of claims per policy.
@@ -452,11 +403,10 @@ claims %>%
   )
 
 # ============================================================
-# 15. claim frequency distribution 
+# 15. Claim Frequency Distribution 
 # ============================================================
 
-# compare the variance of claim frequency with its mean (for a 
-# poisson distribution)
+# Compare the variance of claim frequency with its mean (for a Poisson distribution)
 
 claims %>%
   summarise(
@@ -465,7 +415,6 @@ claims %>%
     dispersion_ratio = var(claim_freq) / mean(claim_freq)
   )
 
-# the dispersion ratio is substantially greater than 1 (2.02), 
-# indicating overdispersion in the claim frequency response.
-# Therefore a Negative Binomial model may be more appropriate than
-# a standard Poisson model 
+# The dispersion ratio is substantially greater than 1 (2.02), indicating overdispersion 
+# in the claim frequency response. Therefore a Negative Binomial model may be more 
+# appropriate than a standard Poisson model. 
