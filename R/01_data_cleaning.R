@@ -4,7 +4,7 @@
 # Purpose: Data cleaning and preparation
 # ============================================================
 
-# load packages
+# Load packages.
 
 library(tidyverse)
 library(MASS)
@@ -16,35 +16,33 @@ library(lubridate)
 
 
 # ============================================================
-# 1. import data
+# 1. Import Data
 # ============================================================
 
-# import raw insurance policy data from excel file (from kaggle)
-claims <- read_excel("data/Car Insurance Policies .xlsx")
+# Import raw insurance policy data from excel file (from kaggle).
+claims <- read_excel("data/Car Insurance Policies .Ixlsx")
 
 # ============================================================
-# 2. data type conversion
+# 2. Data Type Conversion
 # ============================================================
 
-# convert birthdate from character format to date format
-
+# Convert birthdate from string format to date format.
 claims <- claims %>%
   mutate(
     birthdate = as.Date(birthdate, format = "%m/%d/%Y")
   )
 
 # ============================================================
-# 3. categorical value preparation 
+# 3. Categorical Value Preparation 
 # ============================================================
 
-# standardize spelling of martial status categories
-# convert categorical predictors to factors for statistical modeling
+# Standardize spelling of marital status categories.
 claims <- claims %>%
   mutate(
     marital_status = recode(
       marital_status,
       "Seperated" = "Separated"
-    ),
+    ), # Convert categorical predictors to factors for statistical modeling.
     marital_status = factor(marital_status),
     car_use = factor(car_use),
     gender = factor(gender),
@@ -54,12 +52,11 @@ claims <- claims %>%
   )
 
 # ============================================================
-# 4. numeric variable validation 
+# 4. Numeric Variable Validation 
 # ============================================================
 
-# review summary statistics for numerical variables to 
-# identify potential outliers, invalid values, or 
-# data-entry issues.
+# Review summary statistics for numerical variables to identify potential outliers, 
+# invalid values, or data-entry issues.
 
 summary(claims %>%
           dplyr::select(
@@ -71,28 +68,24 @@ summary(claims %>%
           ))
 
 # ============================================================
-# 5. vehicle year validation 
+# 5. Vehicle Year Validation 
 # ============================================================
 
-# examine distribution of vehicle model years to identify 
-# any unusually old vehicles that may require further 
-# investigation 
+# Further investigation for unusually old vehicles.
 
 claims %>% 
   filter(car_year < 1950) %>%
   dplyr::select(ID, car_year, car_make, car_model)
 
-# developer note: 1909 seems suspicious but it corresponds
-# with a legit  car model, and there is more than one listed 
-# in the dataset, therefore I will leave the observation
-# within the dataset. 
+# Developer note: 1909 seems suspicious but it corresponds with a real car model, 
+# and there is more than one listed in the dataset, therefore, the observations 
+# will not be omitted from the dataset. 
 
 # ============================================================
-# 6. character data standardization
+# 6. Character Data Standardization
 # ============================================================
 
-# correct a character-encoding issues in the vehicle manufacturer
-# name to ensure consistent labeling 
+# Correct a character-encoding issue in a vehicle manufacturer name. 
 
 claims <- claims %>%
   mutate(
@@ -103,12 +96,12 @@ claims <- claims %>%
   )
 
 # ============================================================
-# 7. claim frequency and amount validation 
+# 7. Claim Frequency and Amount Validation 
 # ============================================================
 
-# compare claim amounts for policies with and without reported 
-# claims to determine whether claim_amt represents severity only
-# or contains values for policies with zero claim frequency 
+# Compare claim amounts for policies with and without reported claims to determine 
+# whether claim_amt represents severity only or contains values for policies with 
+# zero claim frequency.
 
 claims %>%
   group_by(claim_freq) %>%
@@ -120,7 +113,7 @@ claims %>%
     max_claim_amt = max(claim_amt)
   )
 
-# calculate proportion of policies with at least one claim
+# Calculate proportion of policies with at least one claim.
 
 claims %>%
   summarise(
@@ -130,12 +123,12 @@ claims %>%
   )
 
 # ============================================================
-# 8. derived variables 
+# 8. Derived Variables 
 # ============================================================
 
-# calculate policy holder age using the current year. 
-# this provides an interpretable demographic risk factor for 
-# subsequent exploratory analysis and frequent modeling.
+# Derive select variables to improve interpretability in subsequent analysis.
+
+# Calculate policy holder age using the current year.
 
 claims <- claims %>%
   mutate(
@@ -144,17 +137,14 @@ claims <- claims %>%
     ) / 365.25
   )
 
-# round policy holder age to the nearest whole year for easier
-# intrepretation
+# Round policy holder age to the nearest whole year.
 
 claims <- claims %>%
   mutate(
     age = floor(age)
   )
 
-# calculate vehicle age using the current year.
-# this may capture differences in vehicle characteristics 
-# associated with insurance claim frequency. 
+# Calculate vehicle age using the current year.
 
 claims <- claims  %>%
   mutate(
@@ -162,67 +152,67 @@ claims <- claims  %>%
   )
 
 # ============================================================
-# 9. data quality check
+# 9. Data Quality Check
 # ============================================================
 
-# check structure of the cleaned dataset to confirm data types
+# Check the structure of the cleaned dataset to confirm data types.
 str(claims)
 
-# recheck for missing values in all variables
+# Recheck for missing values in all variables.
 colSums(is.na(claims))
 
-# check for duplicate policy records using ID 
+# Check for duplicate policy records using ID. 
 sum(duplicated(claims$ID))
 
-# verify claims are non-negative whole numbers
+# Verify claims are non-negative whole numbers.
 sort(unique(claims$claim_freq))
 
-# verify ages fall within reasonable range
+# Verify ages fall within reasonable range.
 summary(claims$age)
 
-# verify range of vehicle ages. Noting historical vehicles identified
-# during data validation 
+# Verify range of vehicle ages.
 summary(claims$vehicle_age)
 
 # ============================================================
-# 10. duplicate ID investigation 
+# 10. Duplicate ID Investigation 
 # ============================================================
 
-# identify IDs that appear more than once 
+# Identify IDs that appear more than once.
 
 claims %>% 
   filter(duplicated(ID) | duplicated(ID, fromLast = TRUE)) %>%
   arrange(ID)
 
-# compare complete records to determine if it is a duplicate 
-# entry of two distinct entries
+# Compare complete records to determine if it is a duplicate 
+# entry of two distinct entries.
 
 claims %>%
   filter(ID == "56-5402470") %>%
   print(width = Inf)
 
 # ============================================================
-# 11. duplicate ID resolution
+# 11. Duplicate ID Resolution
 # ============================================================
 
-# remove the two observations associated with the duplicated ID.
-# the records contain different information despite having the 
-# ID. since it is not possible to determine which observation 
-# represents the valid record, both observations will be omitted 
-# from the dataset 
+# Remove the two observations associated with the duplicated ID.The two records 
+# contain different information despite having the same ID. Since it is not possible 
+# to determine which observation represents the valid record, both observations 
+# will be omitted from the dataset.
+
+# Remove observations with the same ID. 
 
 claims <- claims %>% 
   filter(ID != "56-5402470")
 
-# confirm all IDs are unique
+# Confirm all IDs are unique.
 
 sum(duplicated(claims$ID))
 
 # ============================================================
-# 12. save cleaned data set
+# 12. Save Cleaned Data Set
 # ============================================================
 
-# save cleaned data set
+# Save cleaned data set.
 saveRDS(
   claims,
   "output/claims_clean.rds"
