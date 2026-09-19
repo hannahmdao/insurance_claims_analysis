@@ -79,7 +79,6 @@ pearson_dispersion <- sum(
 pearson_dispersion
 
 # ============================================================
-# 3. negative binomial model 
 # 3. Negative Binomial Model 
 # ============================================================
 
